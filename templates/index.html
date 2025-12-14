@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Local FLAN-T5 Chatbot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="chat-wrapper">
+    <div class="chat-header">
+      <h1>Local AI Chatbot</h1>
+      <p>Running on your machine with FLAN-T5 🧠</p>
+    </div>
+
+    <div id="messages" class="chat-messages"></div>
+
+    <form id="chat-form" class="chat-input">
+      <input
+        id="user-input"
+        type="text"
+        placeholder="Ask me something..."
+        autocomplete="off"
+      />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("user-input");
+    const messagesDiv = document.getElementById("messages");
+
+    function addMessage(sender, text) {
+      const div = document.createElement("div");
+      div.className = "message " + sender;
+      div.textContent = text;
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage("user", text);
+      input.value = "";
+      input.focus();
+
+      // placeholder while bot thinks
+      const thinking = document.createElement("div");
+      thinking.className = "message bot";
+      thinking.textContent = "Thinking...";
+      messagesDiv.appendChild(thinking);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const data = await res.json();
+        thinking.textContent = data.reply || "No reply.";
+      } catch (err) {
+        thinking.textContent = "Error talking to the model 😢";
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
